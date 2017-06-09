@@ -5,7 +5,6 @@
 #include <map>
 #include <iostream>
 #include <fstream>
-#include <atlstr.h> 
 #include <string>
 #include <vector>
 
@@ -95,18 +94,17 @@ int CBots::Take(int botFrom, bool low)
 {
 	int ret = MAXINT;
 
-	if (bots[botFrom].first == 17 && bots[botFrom].second == 61)
-		int x = 0;
+	// Part 1
+	//if (bots[botFrom].first == 17 && bots[botFrom].second == 61)
+	//	int x = 0;
 
 	// Low val? Return left side
-	// High val? Check if right side valid. If so, return right. Otherwise return left.
-	if (low || bots[botFrom].second == MAXINT)
+	if (low)
 	{
 		ret =  bots[botFrom].first;
-		bots[botFrom].first = bots[botFrom].second;
-		bots[botFrom].second = MAXINT;
+		bots[botFrom].first = MAXINT;
 	}
-	else // Right side was valid.
+	else // Right side
 	{
 		ret =  bots[botFrom].second;
 		bots[botFrom].second = MAXINT;
@@ -126,30 +124,24 @@ int main()
 	CBots bots;
 	string str;
 	ifstream in;
+	vector<string> movesNotDone;
 	in.open("in.txt");
 
 	// First, find out which number each bot is holding
 	while (getline(in, str))
 	{
 		if (str[0] != 'v')
+		{
+			// We need to initialize the bots first, so we store all other commands for later
+			movesNotDone.push_back(str);
 			continue;
+		}
 
 		vector<string> toks = vecTokenize(str, " ");
 		int val = atoi(toks[1].c_str());
 		int bot = atoi(toks[5].c_str());
 
 		bots.Give(bot, val);
-	}
-
-	in.clear();
-	in.seekg(0, ios::beg);
-
-	vector<string> movesNotDone;
-	while (getline(in, str))
-	{
-		if (str[0] == 'v')
-			continue;
-		movesNotDone.push_back(str);
 	}
 
 	while (true)
@@ -159,8 +151,6 @@ int main()
 		{
 			vector<string> toks = vecTokenize(movesNotDone[i], " ");
 			int botFrom = atoi(toks[1].c_str());
-			int to1 = atoi(toks[6].c_str());
-			int to2 = atoi(toks[11].c_str());
 
 			// If we can't take from this bot (it has fewer than both values) then skip command
 			if (!bots.CanTake(botFrom))
@@ -169,17 +159,19 @@ int main()
 			// We can run this command
 			movesNotDone.erase(movesNotDone.begin() + i);
 			ranAMove = true;
+			int to1 = atoi(toks[6].c_str());
+			int to2 = atoi(toks[11].c_str());
 			// output
-			// Start with high (since high will fall to low if low is moved)
+			if (toks[5][0] == 'o')
+				bots.Put(botFrom, to1, true);
+			else
+				bots.Give(botFrom, to1, true);
+
 			if (toks[10][0] == 'o')
 				bots.Put(botFrom, to2, false);
 			else
 				bots.Give(botFrom, to2, false);
 
-			if (toks[5][0] == 'o')
-				bots.Put(botFrom, to1, true);
-			else
-				bots.Give(botFrom, to1, true);
 		}
 		
 		// If we ran the entire list and didn't find a move, break
